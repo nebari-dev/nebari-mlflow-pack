@@ -3,9 +3,9 @@ name: nebari-mlflow-pack
 description: A Helm chart for deploying MLflow on Kubernetes with optional Nebari platform integration
 type: application
 version: 0.1.0
-appVersion: "3.3.2"
+appVersion: "3.7.0"
 
 dependencies:
   - name: mlflow
-    version: 5.1.17
-    repository: oci://registry-1.docker.io/bitnamicharts
+    version: 1.8.1
+    repository: https://community-charts.github.io/helm-charts

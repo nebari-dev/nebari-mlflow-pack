@@ -51,8 +51,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-MLflow tracking service name - the upstream chart creates a service named <release>-tracking.
+MLflow service name - the community chart creates a service using its fullname template,
+which resolves to just <release> when the subchart name matches (since the dependency
+key "mlflow" is contained in the release name pattern).
 */}}
-{{- define "nebari-mlflow-pack.tracking-service-name" -}}
-{{- printf "%s-tracking" .Release.Name }}
+{{- define "nebari-mlflow-pack.mlflow-service-name" -}}
+{{- .Release.Name }}
 {{- end }}

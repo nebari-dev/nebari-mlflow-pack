@@ -1,4 +1,4 @@
-{{ include "nebari-mlflow-pack.fullname" . }} has been deployed (wrapping Bitnami MLflow).
+{{ include "nebari-mlflow-pack.fullname" . }} has been deployed.
 
 {{- if .Values.nebariapp.enabled }}
 
@@ -15,7 +15,7 @@ Check the NebariApp status:
 
 NebariApp is DISABLED. To access MLflow locally:
 
-  kubectl port-forward svc/{{ .Release.Name }}-tracking 5000:80 -n {{ .Release.Namespace }}
+  kubectl port-forward svc/{{ .Release.Name }} 5000:80 -n {{ .Release.Namespace }}
 
 Then open http://localhost:5000 in your browser.
 

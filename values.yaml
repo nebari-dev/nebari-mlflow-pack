@@ -12,8 +12,8 @@ nebariapp:
   # keycloakHostname: ""                 # Required when auth.enabled (e.g., keycloak.example.com)
   keycloakRealm: nebari                  # Keycloak realm name
   service:
-    # MLflow tracking service (created by mlflow subchart)
-    name: ""  # Defaults to <release>-tracking
+    # MLflow service (created by mlflow subchart)
+    name: ""  # Defaults to <release>-mlflow
     port: 80
   routing:
     routes:
@@ -49,17 +49,10 @@ nebariapp:
 # MLflow
 # =============================================================================
 # All values under this key are passed to the mlflow subchart.
-# Ref: https://github.com/bitnami/charts/tree/main/bitnami/mlflow
+# Ref: https://github.com/community-charts/helm-charts/tree/main/charts/mlflow
 mlflow:
-  tracking:
-    service:
-      type: ClusterIP
-      ports:
-        http: 80
-
-  # Disable the run deployment (not needed for tracking server only)
-  run:
-    enabled: false
+  service:
+    type: ClusterIP
 
 # =============================================================================
 # Overrides

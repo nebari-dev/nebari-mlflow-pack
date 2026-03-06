@@ -9,7 +9,7 @@ metadata:
 spec:
   hostname: {{ required "nebariapp.hostname is required when nebariapp.enabled is true" .Values.nebariapp.hostname }}
   service:
-    name: {{ .Values.nebariapp.service.name | default (include "nebari-mlflow-pack.tracking-service-name" .) }}
+    name: {{ .Values.nebariapp.service.name | default (include "nebari-mlflow-pack.mlflow-service-name" .) }}
     port: {{ .Values.nebariapp.service.port | default 80 }}
   {{- with .Values.nebariapp.routing }}
   routing:
