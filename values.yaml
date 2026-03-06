@@ -1,0 +1,68 @@
+# Default values for nebari-mlflow-pack
+# This is a YAML-formatted file.
+
+# =============================================================================
+# Nebari Integration
+# =============================================================================
+# Creates a NebariApp CRD that configures routing and auth via nebari-operator.
+# Set to false when deploying outside of Nebari.
+nebariapp:
+  enabled: true
+  # hostname: mlflow.nebari.example.com  # Required when enabled
+  # keycloakHostname: ""                 # Required when auth.enabled (e.g., keycloak.example.com)
+  keycloakRealm: nebari                  # Keycloak realm name
+  service:
+    # MLflow tracking service (created by mlflow subchart)
+    name: ""  # Defaults to <release>-tracking
+    port: 80
+  routing:
+    routes:
+      - pathPrefix: /
+  auth:
+    enabled: true
+    provider: keycloak
+    provisionClient: true
+    enforceAtGateway: true
+    redirectURI: /
+    scopes:
+      - openid
+      - profile
+      - email
+      - groups
+    # groups: []           # Groups to create in Keycloak (e.g., [admin, data-science-team])
+    # keycloakConfig:      # Advanced Keycloak client configuration
+    #   groups:            # Groups with optional member assignments
+    #     - name: admin
+    #       members: [nebari-admin]
+    #     - name: data-science-team
+    #   protocolMappers:   # Client-level protocol mappers
+    #     - name: group-membership
+    #       protocolMapper: oidc-group-membership-mapper
+    #       config:
+    #         claim.name: groups
+    #         full.path: "false"
+    #         id.token.claim: "true"
+    #         access.token.claim: "true"
+    #         userinfo.token.claim: "true"
+
+# =============================================================================
+# MLflow
+# =============================================================================
+# All values under this key are passed to the mlflow subchart.
+# Ref: https://github.com/bitnami/charts/tree/main/bitnami/mlflow
+mlflow:
+  tracking:
+    service:
+      type: ClusterIP
+      ports:
+        http: 80
+
+  # Disable the run deployment (not needed for tracking server only)
+  run:
+    enabled: false
+
+# =============================================================================
+# Overrides
+# =============================================================================
+nameOverride: ""
+fullnameOverride: ""
