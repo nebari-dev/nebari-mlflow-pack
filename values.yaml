@@ -23,7 +23,7 @@ nebariapp:
     provider: keycloak
     provisionClient: true
     enforceAtGateway: true
-    redirectURI: /
+    redirectURI: /oauth2/callback
     scopes:
       - openid
       - profile
