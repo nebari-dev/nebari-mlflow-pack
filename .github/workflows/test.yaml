@@ -24,13 +24,11 @@ jobs:
         run: helm dependency update .
 
       - name: Install chart
-        env:
-          HELM_DRIVER: configmap
         run: |
           helm install mlflow-pack . \
             --create-namespace --namespace mlflow \
             --set nebariapp.enabled=false \
-            --set mlflow.postgresql.auth.password=testpassword \
+            --set mlflow.postgresql.enabled=false \
             --wait --timeout 5m
 
       - name: Wait for MLflow pod
