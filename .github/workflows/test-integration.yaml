@@ -110,6 +110,8 @@ jobs:
         run: helm dependency update .
 
       - name: Deploy mlflow-pack
+        env:
+          HELM_DRIVER: configmap
         run: |
           helm install mlflow-pack . \
             --namespace mlflow \
