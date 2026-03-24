@@ -25,14 +25,13 @@ jobs:
 
       - name: Install chart
         run: |
-          helm install mlflow-pack . \
-            --create-namespace --namespace mlflow \
+          kubectl create namespace mlflow
+          helm template mlflow-pack . \
+            --namespace mlflow \
             --set nebariapp.enabled=false \
             --set mlflow.postgresql.enabled=false \
-            --wait --timeout 5m
-
-      - name: Wait for MLflow pod
-        run: kubectl wait -n mlflow --for=condition=ready pod -l app=mlflow --timeout=180s
+            | kubectl apply -n mlflow -f -
+          kubectl rollout status deployment/mlflow-pack -n mlflow --timeout=300s
 
       - name: Health check
         run: |
@@ -40,6 +39,3 @@ jobs:
           sleep 5
           curl -sf http://localhost:5080/health
           kill %1
-
-      - name: Uninstall
-        run: helm uninstall mlflow-pack -n mlflow --wait

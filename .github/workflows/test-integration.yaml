@@ -111,12 +111,13 @@ jobs:
 
       - name: Deploy mlflow-pack
         run: |
-          helm install mlflow-pack . \
+          helm template mlflow-pack . \
             --namespace mlflow \
             --set nebariapp.hostname=mlflow.nebari.local \
             --set nebariapp.auth.enabled=false \
             --set mlflow.postgresql.enabled=false \
-            --wait --timeout 5m
+            | kubectl apply -n mlflow -f -
+          kubectl rollout status deployment/mlflow-pack -n mlflow --timeout=300s
 
       - name: Verify NebariApp
         run: |
@@ -133,7 +134,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: helm uninstall mlflow-pack -n mlflow --wait || true
+        run: kubectl delete namespace mlflow --wait || true
 
       # ============================================================
       # Debug on failure
