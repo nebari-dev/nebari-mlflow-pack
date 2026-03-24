@@ -6,12 +6,10 @@ on:
       chart_path:
         description: "Path to the chart directory to release"
         required: true
-        default: "examples/basic-nginx/chart"
+        default: "."
         type: choice
         options:
-          - "examples/basic-nginx/chart"
-          - "examples/auth-fastapi/chart"
-          - "examples/wrap-existing-chart/chart"
+          - "."
 
 jobs:
   release:
