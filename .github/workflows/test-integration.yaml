@@ -87,7 +87,7 @@ jobs:
       # ============================================================
       - name: Install nebari-operator
         run: |
-          kubectl apply -f https://github.com/nebari-dev/nebari-operator/releases/latest/download/install.yaml
+          kubectl apply -f https://github.com/nebari-dev/nebari-operator/releases/download/v0.1.0-alpha.13/install.yaml
 
       - name: Wait for nebari-operator
         run: |
