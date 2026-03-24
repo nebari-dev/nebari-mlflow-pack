@@ -750,6 +750,66 @@ auth:
     - data-science-team
 ```
 
+## PostgreSQL Backend Store
+
+By default, this chart bundles a Bitnami PostgreSQL instance for persistent
+experiment and run storage. The database credentials must be provided via a
+pre-created Kubernetes Secret.
+
+### Creating the credentials secret
+
+The secret name **must** follow the convention `<release-name>-postgresql`. For
+example, if your Helm release name is `mlflow-pack`, the secret must be named
+`mlflow-pack-postgresql`.
+
+```bash
+kubectl create namespace mlflow  # if it doesn't exist
+
+# Replace "mlflow-pack" with your Helm release name
+kubectl create secret generic mlflow-pack-postgresql \
+  --namespace mlflow \
+  --from-literal=password="$(openssl rand -base64 32)" \
+  --from-literal=postgres-password="$(openssl rand -base64 32)"
+```
+
+| Key                 | Purpose                              |
+|---------------------|--------------------------------------|
+| `password`          | Password for the `mlflow` database user |
+| `postgres-password` | Password for the PostgreSQL superuser   |
+
+### Referencing the secret
+
+In your ArgoCD Application values (or `helm install --set`):
+
+```yaml
+mlflow:
+  postgresql:
+    auth:
+      existingSecret: mlflow-pack-postgresql  # must be <release>-postgresql
+```
+
+### Alternative: inline password (dev/testing only)
+
+For quick development setups, you can pass the password directly:
+
+```bash
+helm install mlflow-pack . \
+  --set mlflow.postgresql.auth.password=my-dev-password
+```
+
+This stores the password in the Helm release secret. **Do not use this in
+production or commit it to a gitops repository.**
+
+### Disabling PostgreSQL
+
+To use in-memory SQLite (data lost on pod restart):
+
+```yaml
+mlflow:
+  postgresql:
+    enabled: false
+```
+
 ## Troubleshooting
 
 ### NebariApp shows `NamespaceNotOptedIn`

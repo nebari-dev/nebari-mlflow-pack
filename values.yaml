@@ -68,9 +68,15 @@ mlflow:
     enabled: true
     auth:
       username: mlflow
-      password: ""  # Must be set by deployer or use existingSecret
       database: mlflow
-      # existingSecret: ""  # Use a pre-created Secret instead of password
+      # Option 1 (recommended): Reference a pre-created Kubernetes Secret.
+      # The secret name MUST be "<release-name>-postgresql" (e.g.
+      # "mlflow-pack-postgresql" if releaseName is "mlflow-pack").
+      # The secret must contain keys: "password" and "postgres-password".
+      # See README for creation instructions.
+      existingSecret: ""
+      # Option 2 (dev/testing only): Set the password inline.
+      # password: ""
     primary:
       persistence:
         enabled: true
