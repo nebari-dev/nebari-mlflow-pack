@@ -54,6 +54,28 @@ mlflow:
   service:
     type: ClusterIP
 
+  # -- Backend store: bundled PostgreSQL (recommended for production).
+  # When postgresql.enabled=true, the mlflow subchart automatically wires
+  # PGHOST, PGPORT, PGDATABASE, PGUSER, and PGPASSWORD environment variables
+  # and sets --backend-store-uri=postgresql:// on the server.
+  # The default (postgresql.enabled=false) uses in-memory SQLite, which loses
+  # data on every pod restart.
+  backendStore:
+    databaseMigration: true
+    databaseConnectionCheck: true
+
+  postgresql:
+    enabled: true
+    auth:
+      username: mlflow
+      password: ""  # Must be set by deployer or use existingSecret
+      database: mlflow
+      # existingSecret: ""  # Use a pre-created Secret instead of password
+    primary:
+      persistence:
+        enabled: true
+        size: 8Gi
+
 # =============================================================================
 # Overrides
 # =============================================================================
