@@ -87,7 +87,11 @@ jobs:
       # ============================================================
       - name: Install nebari-operator
         run: |
-          kubectl apply -f https://github.com/nebari-dev/nebari-operator/releases/download/v0.1.0-alpha.13/install.yaml
+          # Install the CRDs and manifests from the release, then patch the image
+          # tag to match quay.io (tags without the 'v' prefix).
+          curl -sL https://github.com/nebari-dev/nebari-operator/releases/download/v0.1.0-alpha.13/install.yaml \
+            | sed 's|quay.io/nebari/nebari-operator:v0.1.0-alpha.13|quay.io/nebari/nebari-operator:0.1.0-alpha.13|' \
+            | kubectl apply -f -
 
       - name: Wait for nebari-operator
         run: |
