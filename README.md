@@ -812,31 +812,15 @@ mlflow:
 
 ## Connecting JupyterHub (data-science-pack)
 
-To allow JupyterHub notebooks to log experiments to MLflow, the
-[nebari-data-science-pack](https://github.com/nebari-dev/nebari-data-science-pack)
-needs two configuration changes:
-
-### 1. Set the tracking URI
-
-Add `MLFLOW_TRACKING_URI` to the singleuser environment so the MLflow Python
-client connects to the in-cluster server automatically:
+To allow JupyterHub notebooks to log experiments to MLflow, add the following
+to your [nebari-data-science-pack](https://github.com/nebari-dev/nebari-data-science-pack)
+values:
 
 ```yaml
 jupyterhub:
   singleuser:
     extraEnv:
       MLFLOW_TRACKING_URI: "http://mlflow-pack.mlflow.svc.cluster.local:80"
-```
-
-### 2. Open the NetworkPolicy
-
-The JupyterHub singleuser NetworkPolicy blocks egress to private IP ranges by
-default. MLflow's pod listens on port **5000** (the service translates 80→5000),
-and NetworkPolicy operates at the pod IP level, so you must allow port 5000:
-
-```yaml
-jupyterhub:
-  singleuser:
     networkPolicy:
       egress:
         - ports:
@@ -848,8 +832,13 @@ jupyterhub:
                   kubernetes.io/metadata.name: mlflow
 ```
 
-> **Note:** After changing the NetworkPolicy, existing JupyterLab sessions must
-> be restarted (stop/start from the hub control panel) to pick up the new rules.
+This sets the tracking URI so the MLflow Python client auto-connects, and opens
+the singleuser NetworkPolicy to allow traffic to the MLflow namespace. The
+egress rule uses port **5000** (the pod port) because NetworkPolicy operates at
+the pod IP level, not the ClusterIP service level (which maps 80→5000).
+
+> **Note:** After applying, existing JupyterLab sessions must be restarted
+> (stop/start from the hub control panel) to pick up the new NetworkPolicy.
 
 ### Verify from a notebook
 
