@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mlflow-pack
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: nebari-packs
+    app.kubernetes.io/managed-by: nebari-infrastructure-core
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/nebari-dev/nebari-mlflow-pack.git
+    targetRevision: main
+    path: .
+    helm:
+      releaseName: mlflow-pack
+      values: |
+        nebariapp:
+          hostname: mlflow.example.nebari.dev      # Replace with your domain
+          keycloakHostname: keycloak.example.nebari.dev  # Replace with your Keycloak domain
+          auth:
+            enabled: true
+            provider: keycloak
+            provisionClient: true
+        mlflow:
+          log:
+            enabled: false
+          extraFlags:
+            - disableSecurityMiddleware
+          postgresql:
+            auth:
+              existingSecret: mlflow-pack-postgresql  # Pre-create this secret (see README)
+            primary:
+              persistence:
+                storageClass: ""  # Set to your cluster's storage class
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mlflow
+
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        nebari.dev/managed: "true"
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

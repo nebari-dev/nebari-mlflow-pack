@@ -1,31 +1,64 @@
-# Nebari Software Pack Template
+# Nebari MLflow Pack
 
-[![Lint](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/lint.yaml/badge.svg)](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/lint.yaml)
-[![Test](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/test.yaml/badge.svg)](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/test.yaml)
-[![Integration Test](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/test-integration.yaml/badge.svg)](https://github.com/nebari-dev/nebari-software-pack-template/actions/workflows/test-integration.yaml)
+Deploys [MLflow](https://mlflow.org/) on [Nebari](https://nebari.dev) with
+Keycloak authentication, PostgreSQL backend storage, and automatic TLS.
 
-A template repository for building **Nebari Software Packs** - Kubernetes
-applications that deploy on the [Nebari](https://nebari.dev) platform with
-optional routing, TLS, and OIDC authentication.
+## Quick Start
+
+1. **Create the PostgreSQL credentials secret:**
+
+   ```bash
+   kubectl create namespace mlflow
+
+   kubectl create secret generic mlflow-pack-postgresql \
+     --namespace mlflow \
+     --from-literal=password="$(openssl rand -base64 32)" \
+     --from-literal=postgres-password="$(openssl rand -base64 32)"
+   ```
+
+2. **Copy the example ArgoCD Application and edit it for your cluster:**
+
+   ```bash
+   cp examples/argocd-application.yaml /path/to/your/gitops-repo/apps/mlflow-pack.yaml
+   ```
+
+   Update `nebariapp.hostname`, `nebariapp.keycloakHostname`, and
+   `mlflow.postgresql.primary.persistence.storageClass` for your environment.
+
+3. **Add `mlflow.<your-domain>` to your gateway certificate and DNS.**
+
+4. **Connect JupyterHub** (if using
+   [nebari-data-science-pack](https://github.com/nebari-dev/nebari-data-science-pack)):
+
+   Add the following to your data-science-pack ArgoCD Application values:
+
+   ```yaml
+   jupyterhub:
+     singleuser:
+       extraEnv:
+         MLFLOW_TRACKING_URI: "http://mlflow-pack.mlflow.svc.cluster.local:80"
+       networkPolicy:
+         egress:
+           - ports:
+               - port: 5000
+                 protocol: TCP
+             to:
+               - namespaceSelector:
+                   matchLabels:
+                     kubernetes.io/metadata.name: mlflow
+   ```
+
+See [examples/argocd-application.yaml](examples/argocd-application.yaml) for
+the full ArgoCD Application manifest.
 
 ## Table of Contents
 
-- [What is a Nebari Software Pack?](#what-is-a-nebari-software-pack)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [Repository Structure](#repository-structure)
-- [The NebariApp CRD](#the-nebariapp-crd)
-- [Example 1: Vanilla YAML (Plain Manifests)](#example-1-vanilla-yaml-plain-manifests)
-- [Example 2: Kustomize (Nginx)](#example-2-kustomize-nginx)
-- [Example 3: Helm - Basic Pack (Nginx)](#example-3-helm---basic-pack-nginx)
-- [Example 4: Helm - Auth-Aware Pack (FastAPI)](#example-4-helm---auth-aware-pack-fastapi)
-- [Example 5: Helm - Wrapping an Existing Chart (Podinfo)](#example-5-helm---wrapping-an-existing-chart-podinfo)
-- [How Authentication Works](#how-authentication-works)
-- [Local Development](#local-development)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Deploying to a Nebari Cluster](#deploying-to-a-nebari-cluster)
-- [Customizing for Your Own Application](#customizing-for-your-own-application)
+- [PostgreSQL Backend Store](#postgresql-backend-store)
+- [Connecting JupyterHub (data-science-pack)](#connecting-jupyterhub-data-science-pack)
 - [Troubleshooting](#troubleshooting)
+- [Software Pack Template Reference](#software-pack-template-reference)
+
+## Software Pack Template Reference
 
 ## What is a Nebari Software Pack?
 
