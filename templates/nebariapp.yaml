@@ -38,4 +38,8 @@ spec:
       {{- toYaml . | nindent 6 }}
     {{- end }}
   {{- end }}
+  {{- with .Values.nebariapp.landingPage }}
+  landingPage:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
