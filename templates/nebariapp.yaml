@@ -37,6 +37,10 @@ spec:
     keycloakConfig:
       {{- toYaml . | nindent 6 }}
     {{- end }}
+    {{- with .denyRedirect }}
+    denyRedirect:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
   {{- end }}
   {{- with .Values.nebariapp.landingPage }}
   landingPage:
