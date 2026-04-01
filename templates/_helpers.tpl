@@ -58,3 +58,20 @@ key "mlflow" is contained in the release name pattern).
 {{- define "nebari-mlflow-pack.mlflow-service-name" -}}
 {{- .Release.Name }}
 {{- end }}
+
+{{/*
+Compute the comma-separated list of allowed hosts for MLflow's security middleware.
+Includes: NebariApp hostname, cluster-internal service name, and any user-specified extras.
+*/}}
+{{- define "nebari-mlflow-pack.allowed-hosts" -}}
+{{- $hosts := list }}
+{{- if and .Values.nebariapp.enabled .Values.nebariapp.hostname }}
+  {{- $hosts = append $hosts .Values.nebariapp.hostname }}
+{{- end }}
+{{- $svcName := include "nebari-mlflow-pack.mlflow-service-name" . }}
+{{- $hosts = append $hosts (printf "%s.%s.svc.cluster.local" $svcName .Release.Namespace) }}
+{{- range .Values.security.additionalAllowedHosts }}
+  {{- $hosts = append $hosts . }}
+{{- end }}
+{{- join "," $hosts }}
+{{- end }}

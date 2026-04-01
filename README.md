@@ -165,16 +165,16 @@ Check conditions: `RoutingReady`, `TLSReady`, `AuthReady` should all be `True`.
 
 ### MLflow rejecting requests (host header)
 
-If you see "Invalid Host header" errors, add `--disable-security-middleware`
-via the chart values:
+The chart automatically whitelists the NebariApp hostname and the cluster-internal
+service name (`<release>.mlflow.svc.cluster.local`) via the
+`MLFLOW_SERVER_ALLOWED_HOSTS` environment variable. If you need to allow
+additional hosts, add them to:
 
 ```yaml
-mlflow:
-  extraFlags:
-    - disableSecurityMiddleware
+security:
+  additionalAllowedHosts:
+    - custom-alias.internal
 ```
-
-This is safe when MLflow is behind Keycloak authentication at the gateway.
 
 ## License
 

@@ -54,6 +54,20 @@ mlflow:
   service:
     type: ClusterIP
 
+  # -- Logging: disabled by default so that the upstream chart uses uvicorn
+  # instead of gunicorn. MLflow 3.x security middleware flags (--allowed-hosts,
+  # --disable-security-middleware) are only compatible with uvicorn.
+  # Uvicorn defaults to info-level logging, so there is no functional loss.
+  log:
+    enabled: false
+
+  # -- Allowed hosts secret: the chart creates a Secret named
+  # "nebari-mlflow-allowed-hosts" containing MLFLOW_SERVER_ALLOWED_HOSTS
+  # (derived from nebariapp.hostname + internal service name).
+  # This list injects it into the MLflow container via envFrom.
+  extraSecretNamesForEnvFrom:
+    - nebari-mlflow-allowed-hosts
+
   # -- Backend store: bundled PostgreSQL (recommended for production).
   # When postgresql.enabled=true, the mlflow subchart automatically wires
   # PGHOST, PGPORT, PGDATABASE, PGUSER, and PGPASSWORD environment variables
@@ -81,6 +95,17 @@ mlflow:
       persistence:
         enabled: true
         size: 8Gi
+
+# =============================================================================
+# Security
+# =============================================================================
+# MLflow's security middleware validates the Host header of incoming requests
+# to prevent DNS rebinding attacks. When nebariapp is enabled, the chart
+# automatically whitelists the NebariApp hostname and the cluster-internal
+# service name. Add any extra hosts (e.g., custom internal aliases) here.
+security:
+  additionalAllowedHosts: []
+  # - custom-alias.internal.svc.cluster.local
 
 # =============================================================================
 # Overrides

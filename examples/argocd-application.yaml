@@ -28,10 +28,6 @@ spec:
             provider: keycloak
             provisionClient: true
         mlflow:
-          log:
-            enabled: false
-          extraFlags:
-            - disableSecurityMiddleware
           postgresql:
             auth:
               existingSecret: mlflow-pack-postgresql  # Pre-create this secret (see README)
