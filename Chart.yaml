@@ -2,7 +2,7 @@ apiVersion: v2
 name: nebari-mlflow-pack
 description: A Helm chart for deploying MLflow on Kubernetes with optional Nebari platform integration
 type: application
-version: 0.3.0
+version: 0.0.1
 appVersion: "3.7.0"
 
 dependencies:
