@@ -14,9 +14,9 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/nebari-dev/nebari-mlflow-pack.git
-    targetRevision: main
-    path: .
+    chart: nebari-mlflow-pack
+    repoURL: https://nebari-dev.github.io/nebari-mlflow-pack
+    targetRevision: 0.0.1
     helm:
       releaseName: mlflow-pack
       values: |
