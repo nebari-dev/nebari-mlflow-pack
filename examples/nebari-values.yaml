@@ -16,7 +16,7 @@ spec:
   source:
     chart: nebari-mlflow-pack
     repoURL: https://nebari-dev.github.io/nebari-mlflow-pack
-    targetRevision: 0.0.1
+    targetRevision: 1.0.0
     helm:
       releaseName: mlflow-pack
       values: |
