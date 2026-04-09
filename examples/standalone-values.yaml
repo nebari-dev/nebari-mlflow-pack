@@ -1,0 +1,14 @@
+# Example values for deploying mlflow-pack without Nebari (standalone mode).
+# No nebari-operator, Envoy Gateway, or Keycloak required.
+#
+# Usage:
+#   helm install mlflow-pack nebari-mlflow-pack/nebari-mlflow-pack \
+#     --namespace mlflow --create-namespace \
+#     -f standalone-values.yaml
+
+nebariapp:
+  enabled: false
+
+mlflow:
+  postgresql:
+    enabled: false  # Uses in-memory SQLite (data lost on restart)
