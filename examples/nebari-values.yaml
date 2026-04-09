@@ -1,0 +1,23 @@
+# Example values for deploying mlflow-pack on Nebari with full integration.
+# Requires: nebari-operator, Envoy Gateway, cert-manager, Keycloak
+#
+# Usage:
+#   helm install mlflow-pack nebari-mlflow-pack/nebari-mlflow-pack \
+#     --namespace mlflow --create-namespace \
+#     -f nebari-values.yaml
+
+nebariapp:
+  hostname: mlflow.example.nebari.dev       # Replace with your domain
+  keycloakHostname: keycloak.example.nebari.dev  # Replace with your Keycloak domain
+  auth:
+    enabled: true
+    provider: keycloak
+    provisionClient: true
+
+mlflow:
+  postgresql:
+    auth:
+      existingSecret: mlflow-pack-postgresql  # Pre-create this secret (see README)
+    primary:
+      persistence:
+        storageClass: ""  # Set to your cluster's storage class

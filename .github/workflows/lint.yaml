@@ -26,3 +26,22 @@ jobs:
 
       - name: Template (NebariApp enabled)
         run: helm template test . --set nebariapp.hostname=test.example.com --set mlflow.postgresql.auth.password=test
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Validate schemas (NebariApp disabled)
+        run: |
+          helm template test . \
+            --set nebariapp.enabled=false \
+            --set mlflow.postgresql.auth.password=test \
+            | kubeconform -strict -ignore-missing-schemas -summary
+
+      - name: Validate schemas (NebariApp enabled)
+        run: |
+          helm template test . \
+            --set nebariapp.hostname=test.example.com \
+            --set mlflow.postgresql.auth.password=test \
+            | kubeconform -strict -ignore-missing-schemas -summary

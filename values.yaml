@@ -51,6 +51,9 @@ nebariapp:
 # All values under this key are passed to the mlflow subchart.
 # Ref: https://github.com/community-charts/helm-charts/tree/main/charts/mlflow
 mlflow:
+  image:
+    tag: "3.7.0"  # Pin to match appVersion in Chart.yaml
+
   service:
     type: ClusterIP
 
@@ -80,6 +83,8 @@ mlflow:
 
   postgresql:
     enabled: true
+    image:
+      tag: "17.5.0"
     auth:
       username: mlflow
       database: mlflow
