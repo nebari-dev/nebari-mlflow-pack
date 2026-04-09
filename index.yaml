@@ -1,0 +1,19 @@
+apiVersion: v1
+entries:
+  nebari-mlflow-pack:
+  - apiVersion: v2
+    appVersion: 3.7.0
+    created: "2026-04-09T22:03:39.703456996Z"
+    dependencies:
+    - name: mlflow
+      repository: https://community-charts.github.io/helm-charts
+      version: 1.8.1
+    description: A Helm chart for deploying MLflow on Kubernetes with optional Nebari
+      platform integration
+    digest: 181ced36973ccc237e5ce6d9867a184c902613b5ead1398a0ae22d2de0b579c3
+    name: nebari-mlflow-pack
+    type: application
+    urls:
+    - https://github.com/nebari-dev/nebari-mlflow-pack/releases/download/nebari-mlflow-pack-1.0.0/nebari-mlflow-pack-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-04-09T22:03:39.688972169Z"
