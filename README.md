@@ -22,7 +22,7 @@ Keycloak authentication, PostgreSQL backend storage, and automatic TLS.
 2. **Copy the example ArgoCD Application and edit it for your cluster:**
 
    ```bash
-   cp examples/argocd-application.yaml /path/to/your/gitops-repo/apps/mlflow-pack.yaml
+   cp examples/nebari-values.yaml /path/to/your/gitops-repo/apps/mlflow-pack.yaml
    ```
 
    Update `nebariapp.hostname`, `nebariapp.keycloakHostname`, and
@@ -30,7 +30,7 @@ Keycloak authentication, PostgreSQL backend storage, and automatic TLS.
 
 3. **Add `mlflow.<your-domain>` to your gateway certificate and DNS.**
 
-See [examples/argocd-application.yaml](examples/argocd-application.yaml) for
+See [examples/nebari-values.yaml](examples/nebari-values.yaml) for
 the full ArgoCD Application manifest.
 
 ## Connecting JupyterHub
