@@ -109,10 +109,6 @@ const config = {
               label: 'Introduction',
               to: '/docs/introduction',
             },
-            {
-              label: 'Quick start',
-              to: '/docs/get-started/quickstart',
-            },
           ],
         },
         {
