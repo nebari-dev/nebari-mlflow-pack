@@ -1,0 +1,35 @@
+/**
+ * Brand-adjacent styling aligned with Nebari documentation (dark navbar, accent highlights).
+ * https://docusaurus.io/docs/styling-layout
+ */
+
+:root {
+  --ifm-color-primary: #20aaa1;
+  --ifm-color-primary-dark: #1a8f87;
+  --ifm-color-primary-darker: #187a73;
+  --ifm-color-primary-darkest: #13655f;
+  --ifm-color-primary-light: #4dbfb8;
+  --ifm-color-primary-lighter: #6ac9c3;
+  --ifm-color-primary-lightest: #97dbd6;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(32, 170, 161, 0.12);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #4dd4c9;
+  --ifm-color-primary-dark: #3bbfb5;
+  --ifm-color-primary-darker: #35aea5;
+  --ifm-color-primary-darkest: #2c8f88;
+  --ifm-color-primary-light: #6fded5;
+  --ifm-color-primary-lighter: #8ae6de;
+  --ifm-color-primary-lightest: #b3f0eb;
+  --docusaurus-highlighted-code-line-bg: rgba(77, 212, 201, 0.15);
+}
+
+.navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer--dark {
+  --ifm-footer-background-color: #111827;
+}
