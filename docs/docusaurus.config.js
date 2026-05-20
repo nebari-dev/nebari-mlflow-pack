@@ -58,10 +58,15 @@ const config = {
         },
         blog: false,
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve("./src/scss/application.scss"),
         },
       }),
     ],
+  ],
+  // ---------------------------------------------------------------------------
+  // Plugins need installing first then add here
+  plugins: [
+    "docusaurus-plugin-sass",
   ],
 
   customFields: { ...customFields },
