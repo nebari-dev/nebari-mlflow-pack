@@ -26,14 +26,35 @@ export default defineConfig({
       // GitHub social link) comes from the @nebari/starlight theme plugin. On the
       // portal the header logo returns users to the pack catalog.
       plugins: [nebari({ logoHref: 'https://packs.nebari.dev/' })],
+      editLink: {
+        // Starlight appends the source path (src/content/docs/<file>.md) to this
+        // base, so it must point at the Astro project root inside the repo.
+        baseUrl: 'https://github.com/nebari-dev/mlflow-pack/edit/main/docs/',
+      },
       sidebar: [
         {
           label: 'Getting Started',
-          items: [{ label: 'Introduction', link: '/' }],
+          items: [
+            { label: 'Introduction', link: '/' },
+            { label: 'Getting started', link: '/getting-started/' },
+            { label: 'Deploying on Nebari', link: '/deployment/' },
+            { label: 'Connecting JupyterHub', link: '/jupyterhub/' },
+            { label: 'Standalone deployment', link: '/standalone/' },
+          ],
+        },
+        {
+          label: 'Guides',
+          items: [
+            { label: 'PostgreSQL backend', link: '/postgresql/' },
+            { label: 'Artifact storage', link: '/artifact-storage/' },
+            { label: 'Allowed hosts', link: '/allowed-hosts/' },
+            { label: 'Troubleshooting', link: '/troubleshooting/' },
+          ],
         },
         {
           label: 'Reference',
           items: [
+            { label: 'Configuration', link: '/configuration/' },
             { label: 'Authentication flow', link: '/auth-flow/' },
             { label: 'NebariApp CRD', link: '/nebariapp-crd-reference/' },
           ],
