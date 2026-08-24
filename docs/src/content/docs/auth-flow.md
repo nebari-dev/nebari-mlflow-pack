@@ -175,7 +175,7 @@ When `auth.enabled: true`, the nebari-operator creates these resources:
 
 The operator calls the Keycloak Admin API to create an OIDC client:
 
-- **Client ID:** `<nebariapp-name>`
+- **Client ID:** `<namespace>-<nebariapp-name>`
 - **Client protocol:** `openid-connect`
 - **Access type:** `confidential`
 - **Redirect URIs:** `https://<hostname><redirectURI>`
@@ -238,13 +238,16 @@ spec:
 
 ### 5. cert-manager Certificate (when `routing.tls.enabled: true`)
 
+Created in the gateway's namespace (`envoy-gateway-system`), not the app's:
+
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: <nebariapp-name>-tls
+  name: <nebariapp-name>-<namespace>-cert
+  namespace: envoy-gateway-system
 spec:
-  secretName: <nebariapp-name>-tls
+  secretName: <nebariapp-name>-<namespace>-tls
   dnsNames:
     - <hostname>
   issuerRef:

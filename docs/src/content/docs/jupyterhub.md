@@ -115,10 +115,11 @@ export MLFLOW_TRACKING_URI=http://localhost:5000
 ```
 
 `localhost` is not in the allowed-hosts list by default, so add it if the server rejects
-the request:
+the request. The port has to match too — MLflow compares the `Host` header exactly, and a
+port-forwarded client sends `localhost:5000`:
 
 ```yaml
 security:
   additionalAllowedHosts:
-    - localhost
+    - "localhost:*"
 ```

@@ -15,8 +15,9 @@ The backend store is configured for durability. The artifact store is not.
 
 :::caution[Artifacts are lost when the MLflow pod restarts]
 The upstream chart defaults `artifactRoot.defaultArtifactRoot` to `./mlruns`, a relative
-path in the container's writable layer. The pod has no PVC mounted there, so a restart,
-rollout, upgrade, or eviction discards everything logged.
+path in the container's writable layer — the image's workdir is `/mlflow`, so
+`/mlflow/mlruns`. The pod has no PVC mounted there, so a restart, rollout, upgrade, or
+eviction discards everything logged.
 
 What makes this worse than plain data loss: run metadata in PostgreSQL survives. You are
 left with a registry full of runs whose model files no longer exist, and no error until
@@ -118,13 +119,20 @@ with mlflow.start_run() as run:
     print(mlflow.get_artifact_uri())
 ```
 
-The printed URI should start with `s3://`, `gs://`, or `wasbs://` — not a local path. Then
-confirm the object exists in the bucket.
+With `proxiedArtifactStorage: true` the printed URI is
+`mlflow-artifacts:/<experiment>/<run>/artifacts` — the client talks to the tracking server,
+which is the one holding the bucket credentials. That is the success case; a plain local
+filesystem path is the failure case. Confirm the object actually landed by looking in the
+bucket. With proxying off, the URI is the bucket scheme directly (`s3://`, `gs://`,
+`wasbs://`).
 
-You can also read it off the server:
+The server's artifact configuration is on its command line, not in its environment — the
+chart passes `--artifacts-destination` (proxied) or `--default-artifact-root` (direct) as
+flags:
 
 ```bash
-kubectl -n mlflow exec deploy/mlflow-pack -- env | grep -i artifact
+kubectl -n mlflow get deploy mlflow-pack \
+  -o jsonpath='{.spec.template.spec.containers[0].args}'
 ```
 
 ## Migrating existing artifacts
@@ -134,7 +142,7 @@ files are usually already gone. If a pod is still running with artifacts you car
 copy them out before changing anything:
 
 ```bash
-kubectl -n mlflow cp mlflow/<pod>:/app/mlruns ./mlruns-backup
+kubectl cp mlflow/<pod>:/mlflow/mlruns ./mlruns-backup
 ```
 
 Then reconfigure the artifact root. Existing runs keep their recorded artifact URIs, so

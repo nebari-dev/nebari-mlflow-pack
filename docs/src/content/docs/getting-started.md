@@ -53,7 +53,6 @@ repository. More detail in [PostgreSQL backend](/postgresql/).
 helm install mlflow-pack . \
   --namespace mlflow \
   --set nebariapp.hostname=mlflow.example.com \
-  --set nebariapp.keycloakHostname=keycloak.example.com \
   --set mlflow.postgresql.auth.existingSecret=mlflow-pack-postgresql
 ```
 
@@ -65,10 +64,18 @@ With `nebariapp.enabled: true` (the default) and no `nebariapp.hostname`, the ch
 to render: `nebariapp.hostname is required when nebariapp.enabled is true`.
 :::
 
-## 3. Point DNS and the certificate at the hostname
+## 3. Point DNS at the hostname
 
-Add `mlflow.<your-domain>` to your gateway certificate and to DNS. Until both exist the
-`NebariApp` reports `RoutingReady` but the browser cannot reach it.
+Add an `A` or `CNAME` record for `mlflow.<your-domain>` pointing at the gateway's external
+address. The certificate is not your job: when the operator has a ClusterIssuer configured,
+the `NebariApp` has cert-manager issue one for the hostname and adds a per-app HTTPS
+listener to the gateway. Until DNS resolves, the ACME challenge cannot complete and
+`TLSReady` stays `False` with reason `CertificateNotReady`.
+
+If the operator has no ClusterIssuer, it falls back to the gateway's shared HTTPS listener
+— and then the hostname does have to be covered by that shared certificate. To use a
+certificate you manage yourself, set `nebariapp.routing.tls.secretName` to a
+`kubernetes.io/tls` secret in `envoy-gateway-system`.
 
 ## What gets deployed
 
@@ -77,11 +84,18 @@ Add `mlflow.<your-domain>` to your gateway certificate and to DNS. Until both ex
 | `mlflow-pack` | Deployment | MLflow server, container port `5000`, service port `80` |
 | `mlflow-pack-postgresql` | StatefulSet | Backend store, 8Gi PVC |
 | `nebari-mlflow-allowed-hosts` | Secret | `MLFLOW_SERVER_ALLOWED_HOSTS`, injected via `envFrom` |
-| `mlflow-pack` | NebariApp | Routing, TLS, and Keycloak client |
+| `mlflow-pack-nebari-mlflow-pack` | NebariApp | Routing, TLS, and Keycloak client |
 
 Note the service is named after the **release**, not `<release>-mlflow` — the community
 chart's fullname helper collapses when the release name contains the chart name. The
 `nebariapp.service.name` default follows the same helper, so the two always agree.
+
+The `NebariApp` gets the long name for the opposite reason: *this* chart's fullname helper
+does not collapse, because the release name `mlflow-pack` does not contain the chart name
+`nebari-mlflow-pack`, so the two are concatenated. Everything the operator derives inherits
+it — the OIDC client secret is `mlflow-pack-nebari-mlflow-pack-oidc-client`, the certificate
+is `mlflow-pack-nebari-mlflow-pack-mlflow-cert`. The commands in these docs leave the name
+off wherever they can.
 
 ## Verify
 
@@ -89,7 +103,8 @@ chart's fullname helper collapses when the release name contains the chart name.
 kubectl -n mlflow get pods
 kubectl -n mlflow rollout status deployment/mlflow-pack
 
-# Health endpoint, straight at the pod
+# Health endpoint, straight at the pod. /health and /version are exempt from
+# MLflow's Host-header check, so this answers even if the allowed-hosts list is wrong.
 kubectl -n mlflow port-forward svc/mlflow-pack 5080:80 &
 curl -sf http://localhost:5080/health && echo OK
 kill %1
@@ -99,7 +114,7 @@ Then the routing layer:
 
 ```bash
 kubectl -n mlflow get nebariapp
-kubectl -n mlflow describe nebariapp mlflow-pack
+kubectl -n mlflow describe nebariapp
 ```
 
 `RoutingReady`, `TLSReady`, and `AuthReady` should all be `True`. If they are not,

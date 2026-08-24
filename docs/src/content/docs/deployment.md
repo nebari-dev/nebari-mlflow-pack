@@ -15,7 +15,8 @@ Two things must exist first, and neither belongs in the Application:
    not go in a values block that lands in git. Create it out of band, or with a sealed/
    external-secrets mechanism your cluster already uses. See
    [Getting started](/getting-started/#1-create-the-postgresql-credentials-secret).
-2. **DNS and a certificate SAN** for `mlflow.<your-domain>`.
+2. **DNS** for `mlflow.<your-domain>`, pointing at the gateway's external address. The
+   certificate is provisioned for you — see [Certificates and DNS](#certificates-and-dns).
 
 ## The manifest
 
@@ -102,15 +103,26 @@ cluster uses.
 **`targetRevision`** should stay pinned. A floating version would upgrade MLflow and its
 database schema without warning.
 
+**`keycloakHostname`** and **`keycloakRealm`** are inert. They appear in `values.yaml` and
+in the example manifest, but no template reads them and the `NebariApp` CRD has no matching
+fields — the operator learns how to reach Keycloak from its own cluster-wide configuration.
+Setting them changes nothing, and so does leaving them out.
+
 ## Certificates and DNS
 
 The `NebariApp` asks cert-manager for a certificate covering the hostname, and asks the
-gateway to route it. Two independent things can be missing:
+gateway to route it. Two independent things can be missing.
+
+The `Certificate` does **not** live in the release namespace. The operator creates it in
+`envoy-gateway-system`, alongside the gateway, named `<nebariapp-name>-<namespace>-cert`
+and labelled with the app it belongs to:
 
 ```bash
 # Is the certificate issued?
-kubectl -n mlflow get certificate
-kubectl -n mlflow describe certificate mlflow-pack-tls
+kubectl -n envoy-gateway-system get certificate \
+  -l nebari.dev/nebariapp-namespace=mlflow
+kubectl -n envoy-gateway-system describe certificate \
+  mlflow-pack-nebari-mlflow-pack-mlflow-cert
 
 # Does the route exist and is it attached to a listener?
 kubectl -n mlflow get httproute -o wide
@@ -119,13 +131,18 @@ kubectl -n mlflow get httproute -o wide
 A pending certificate usually means the ACME challenge cannot resolve the hostname — DNS
 first, then the certificate.
 
+If the operator has no ClusterIssuer configured it skips this path entirely, falls back to
+the gateway's shared HTTPS listener, and reports `TLSReady: False` with reason
+`ClusterIssuerNotConfigured`. That is the one case where the hostname has to be covered by
+a certificate someone else maintains.
+
 ## Keycloak client
 
 With `auth.provisionClient: true`, the operator creates a confidential OIDC client in the
-realm and writes its credentials to `mlflow-pack-oidc-client`:
+realm and writes its credentials to `<nebariapp-name>-oidc-client`:
 
 ```bash
-kubectl -n mlflow get secret mlflow-pack-oidc-client
+kubectl -n mlflow get secret mlflow-pack-nebari-mlflow-pack-oidc-client
 ```
 
 The redirect URI is `https://<hostname>/oauth2/callback`, matching the chart's
@@ -168,5 +185,6 @@ kubectl -n argocd get application mlflow-pack
 argocd app get mlflow-pack
 
 kubectl get namespace mlflow -o jsonpath='{.metadata.labels}'
-kubectl -n mlflow get nebariapp,httproute,certificate
+kubectl -n mlflow get nebariapp,httproute
+kubectl -n envoy-gateway-system get certificate -l nebari.dev/nebariapp-namespace=mlflow
 ```

@@ -71,12 +71,14 @@ Three options, in increasing order of permanence.
 kubectl -n mlflow port-forward svc/mlflow-pack 5000:80
 ```
 
-If MLflow rejects the request, add `localhost` to the allow-list:
+If MLflow rejects the request, add `localhost` to the allow-list. The comparison is exact,
+so the entry has to carry the port the client sends — `localhost:*` covers any
+port-forward:
 
 ```yaml
 security:
   additionalAllowedHosts:
-    - localhost
+    - "localhost:*"
 ```
 
 **Your own Ingress** — the chart does not render one, so use the subchart's `ingress`
@@ -129,5 +131,8 @@ that do not exist here. Use the integration workflow as the reference instead.
 `nebariapp.enabled=false` and `postgresql.enabled=false`, then a rollout wait, a
 `GET /health` through a port-forward, a re-apply, and the health check again.
 
-That covers the standalone path and upgrade-in-place. `test-integration.yaml` covers the
-full NebariApp path against a real operator and Keycloak.
+That covers the standalone path and upgrade-in-place. `test-integration.yaml` goes further:
+it stands up MetalLB, Envoy Gateway, cert-manager, Keycloak, and the operator on kind, then
+waits for the `NebariApp` to report `Ready` and checks the `HTTPRoute` exists. It deploys
+with `nebariapp.auth.enabled=false`, though, so the OIDC handshake itself is not exercised
+by CI.

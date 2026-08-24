@@ -7,15 +7,20 @@ description: Symptoms, causes, and the commands that tell them apart.
 
 ```bash
 kubectl -n mlflow get pods
-kubectl -n mlflow get nebariapp,httproute,certificate
+kubectl -n mlflow get nebariapp,httproute
+kubectl -n envoy-gateway-system get certificate -l nebari.dev/nebariapp-namespace=mlflow
 kubectl -n mlflow logs deploy/mlflow-pack --tail=100
 ```
 
 ## The NebariApp is not ready
 
 ```bash
-kubectl -n mlflow describe nebariapp mlflow-pack
+kubectl -n mlflow describe nebariapp
 ```
+
+The resource is named `<release>-<chart>` — `mlflow-pack-nebari-mlflow-pack` for a release
+called `mlflow-pack` — which is why the commands on this page address it by namespace rather
+than by name wherever they can.
 
 `RoutingReady`, `TLSReady`, and `AuthReady` should all be `True`. Each maps to a different
 cause.
@@ -23,7 +28,7 @@ cause.
 | Condition | Usually means |
 |---|---|
 | `RoutingReady: False` | The target service does not exist, or the gateway has no listener for the hostname. |
-| `TLSReady: False` | cert-manager has not issued the certificate — check DNS and the ACME challenge. |
+| `TLSReady: False` | Reason `CertificateNotReady`: cert-manager has not issued it — check DNS and the ACME challenge. Reason `ClusterIssuerNotConfigured`: the operator has no ClusterIssuer, so the app fell back to the gateway's shared HTTPS listener. |
 | `AuthReady: False` | The operator could not reach Keycloak, or the realm/hostname is wrong. |
 
 **Nothing happens at all** — no conditions, no events — almost always means the namespace is
@@ -40,7 +45,7 @@ The operator ignores `NebariApp` resources in unlabeled namespaces, silently.
 
 ```bash
 kubectl -n mlflow get svc
-kubectl -n mlflow get nebariapp mlflow-pack -o jsonpath='{.spec.service.name}'
+kubectl -n mlflow get nebariapp -o jsonpath='{.items[0].spec.service.name}'
 ```
 
 The community chart names the service after the **release**, not `<release>-mlflow`,
@@ -58,8 +63,8 @@ kubectl -n mlflow logs statefulset/mlflow-pack-postgresql --tail=50
 
 | Log says | Cause |
 |---|---|
-| A key is missing from the secret | The Secret lacks `password` or `postgres-password`. |
-| Authentication failed for user `mlflow` | The Secret name is not `<release>-postgresql`, so a different password was generated. |
+| A key is missing from the secret | The Secret lacks `password` or `postgres-password`. The pod sits in `CreateContainerConfigError` rather than crash-looping. |
+| Authentication failed for user `mlflow` | The Secret name is not `<release>-postgresql`. MLflow's `PGPASSWORD` reference points at that exact name and is `optional: true`, so it starts with no password at all. |
 | Pending PVC | No default StorageClass, or the requested class does not exist. |
 
 Check the secret is where the chart looks for it:
@@ -71,18 +76,21 @@ kubectl -n mlflow get secret mlflow-pack-postgresql -o jsonpath='{.data}' | jq '
 
 See [PostgreSQL backend](/postgresql/).
 
-## MLflow starts but returns 400s
+## MLflow starts but returns 403s
 
-Almost always the `Host` header check:
+Almost always the `Host` header check. The response body is
+`Invalid Host header - possible DNS rebinding attack detected`:
 
 ```bash
-kubectl -n mlflow logs deploy/mlflow-pack | grep -i host
+kubectl -n mlflow logs deploy/mlflow-pack | grep -i "invalid Host header"
 kubectl -n mlflow get secret nebari-mlflow-allowed-hosts \
   -o jsonpath='{.data.MLFLOW_SERVER_ALLOWED_HOSTS}' | base64 -d; echo
 ```
 
 The rejected host in the log is the exact string to add to
-`security.additionalAllowedHosts`. See [Allowed hosts](/allowed-hosts/).
+`security.additionalAllowedHosts` — port included, if the client sent one, because the
+comparison is exact. `/health` and `/version` are exempt from the check, so the readiness
+probe stays green throughout. See [Allowed hosts](/allowed-hosts/).
 
 If `MLFLOW_SERVER_ALLOWED_HOSTS` is missing from the container environment entirely, check
 that `mlflow.extraSecretNamesForEnvFrom` still contains `nebari-mlflow-allowed-hosts` — an
@@ -113,10 +121,13 @@ Expected with the default configuration. Run metadata lives in PostgreSQL and su
 artifacts default to a path inside the pod and do not.
 
 ```bash
-kubectl -n mlflow exec deploy/mlflow-pack -- env | grep -i artifact
+kubectl -n mlflow get deploy mlflow-pack \
+  -o jsonpath='{.spec.template.spec.containers[0].args}'
 ```
 
-A local path rather than an `s3://`, `gs://`, or `wasbs://` URI confirms it. See
+The artifact root is a server flag, not an environment variable.
+`--default-artifact-root=./mlruns` confirms it; a configured bucket appears instead as
+`--artifacts-destination=s3://…` alongside `--serve-artifacts`. See
 [Artifact storage](/artifact-storage/).
 
 ## The browser loops through Keycloak
@@ -127,8 +138,8 @@ operator registers `https://<hostname><redirectURI>`; the default `redirectURI` 
 loop follows.
 
 ```bash
-kubectl -n mlflow get nebariapp mlflow-pack -o jsonpath='{.spec.auth}' | jq
-kubectl -n mlflow get secret mlflow-pack-oidc-client
+kubectl -n mlflow get nebariapp -o jsonpath='{.items[0].spec.auth}' | jq
+kubectl -n mlflow get secret mlflow-pack-nebari-mlflow-pack-oidc-client
 ```
 
 Also check cookie size: a user in many Keycloak groups can produce a JWT that exceeds the
@@ -151,7 +162,7 @@ A pass here narrows every remaining problem to routing, TLS, auth, or the client
 
 ```bash
 kubectl -n mlflow get all
-kubectl -n mlflow describe nebariapp mlflow-pack
+kubectl -n mlflow describe nebariapp
 kubectl -n mlflow logs deploy/mlflow-pack --tail=200
 kubectl -n mlflow logs statefulset/mlflow-pack-postgresql --tail=100
 kubectl -n mlflow get events --sort-by=.lastTimestamp | tail -30

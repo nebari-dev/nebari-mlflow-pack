@@ -21,8 +21,8 @@ and passes everything under `mlflow` to the
 |---|---|---|
 | `nebariapp.enabled` | `true` | Render the `NebariApp`. False for [standalone](/standalone/). |
 | `nebariapp.hostname` | — | **Required when enabled.** External hostname. |
-| `nebariapp.keycloakHostname` | — | Required when auth is enabled. |
-| `nebariapp.keycloakRealm` | `nebari` | Realm name. |
+| `nebariapp.keycloakHostname` | — | **Unused** — see the note below. |
+| `nebariapp.keycloakRealm` | `nebari` | **Unused** — see the note below. |
 | `nebariapp.service.name` | `<release>` | Backend service — see the note below. |
 | `nebariapp.service.port` | `80` | Backend port (container port is 5000). |
 | `nebariapp.routing.routes` | `[{pathPrefix: /}]` | MLflow owns the whole host. |
@@ -31,6 +31,18 @@ and passes everything under `mlflow` to the
 Not `<release>-mlflow`. The community chart's fullname helper collapses when the release
 name contains the chart name, and this chart's `mlflow-service-name` helper matches that
 behaviour so the `NebariApp` always targets the right service.
+
+The `NebariApp` itself does *not* collapse, because the release name `mlflow-pack` does not
+contain the chart name `nebari-mlflow-pack` — so it is called
+`mlflow-pack-nebari-mlflow-pack`, and every resource the operator derives from it inherits
+that name.
+:::
+
+:::caution[`keycloakHostname` and `keycloakRealm` do nothing]
+Both appear in `values.yaml` and in `examples/nebari-values.yaml`, but no template reads
+them and the `NebariApp` CRD has no matching fields — the operator gets its Keycloak
+endpoint and realm from its own cluster-wide configuration. Setting them has no effect, and
+neither does leaving them out.
 :::
 
 ### `nebariapp.auth`
@@ -56,9 +68,10 @@ The full handshake, cookie names, and JWT claims are in
 
 ### `nebariapp.landingPage`
 
-Not present in `values.yaml`, so no tile by default. The template supports the full block —
-`enabled`, `displayName`, `description`, `icon`, `category`, `priority`, `externalUrl`, and
-`healthCheck` — if you add it:
+Not present in `values.yaml`, so no tile by default. The template passes through `enabled`,
+`displayName`, `description`, `icon`, `category`, `priority`, `externalUrl`, and
+`healthCheck` if you add it. (The CRD also has `iconLight`, `iconDark`, and
+`healthCheck.port`; this chart's template drops those.)
 
 ```yaml
 nebariapp:
@@ -123,7 +136,6 @@ subchart's own helper. If you set either, re-check that
 ```yaml
 nebariapp:
   hostname: mlflow.example.com
-  keycloakHostname: keycloak.example.com
   auth:
     groups: [data-science-team]
 

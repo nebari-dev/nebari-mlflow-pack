@@ -14,13 +14,13 @@ combination actually works.
 
 ```
   browser ──► Envoy Gateway ──► MLflow ──► PostgreSQL
-                   │             :5000        (bundled)
-              OIDC filter
+                   │          svc :80         (bundled)
+              OIDC filter    pod :5000
                    │
                Keycloak
 
   JupyterHub notebooks ──────► MLflow  (in-cluster, no auth hop)
-    MLFLOW_TRACKING_URI          :80
+    MLFLOW_TRACKING_URI       svc :80
 ```
 
 Two ways in, deliberately. Humans arrive through the gateway and authenticate against

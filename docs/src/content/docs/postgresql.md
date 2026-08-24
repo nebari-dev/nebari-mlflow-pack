@@ -49,9 +49,12 @@ mlflow:
 - **Keys** — `password` (the `mlflow` user) and `postgres-password` (the superuser). Both
   are required.
 
-A missing key makes the PostgreSQL pod crash-loop referencing a key name, which is at least
-a legible error. A misnamed *secret* is worse: the chart generates a random password
-instead, and the failure only appears later as an authentication error from MLflow.
+A missing key is the legible failure: the PostgreSQL pod never starts, stuck in
+`CreateContainerConfigError` naming the key it could not find. A misnamed *secret* is worse.
+The MLflow container reads `PGPASSWORD` from a secret whose name the upstream chart hardcodes
+to `<release>-postgresql`, and marks it `optional: true` — so if your secret is called
+something else, PostgreSQL comes up happily against it, MLflow starts with no password at
+all, and the only symptom is an authentication failure when it connects.
 :::
 
 ### Inline passwords
@@ -130,9 +133,11 @@ kubectl -n longhorn-system get volumes.longhorn.io \
 For a logical backup:
 
 ```bash
-kubectl -n mlflow exec -it statefulset/mlflow-pack-postgresql -- \
+kubectl -n mlflow exec -i statefulset/mlflow-pack-postgresql -- \
   pg_dump -U mlflow mlflow > mlflow-backup.sql
 ```
+
+No `-t` there: a TTY rewrites line endings in the redirected dump.
 
 A complete restore needs both halves — the database *and* the artifact bucket. Restoring
 one without the other produces runs that reference missing models, or orphaned files no run
@@ -153,7 +158,8 @@ mlflow:
       port: 5432
       database: mlflow
       user: mlflow
-      # password or existingSecret, per the upstream chart
+      # password: ...  — or omit it and set
+      # backendStore.existingDatabaseSecret.{name,usernameKey,passwordKey}
 ```
 
 Check the [community chart values](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
@@ -167,9 +173,12 @@ mlflow:
     enabled: false
 ```
 
-MLflow then falls back to SQLite on the container filesystem. There is no PVC, so **every
-experiment is lost on restart**, along with the artifacts. It is fine for a five-minute
-demo or CI — the chart's own integration test uses it — and nothing else.
+MLflow then falls back to SQLite — and not to a file, either. The upstream chart's
+`backendStore.defaultSqlitePath` is `:memory:`, so the server runs with
+`--backend-store-uri=sqlite:///:memory:`. **Everything is lost when the process restarts**,
+along with the artifacts, and with more than one server worker each would see its own empty
+database. Fine for a five-minute demo or CI — the chart's own test workflow uses it — and
+nothing else.
 
 `examples/standalone-values.yaml` uses this combination deliberately; see
 [Standalone deployment](/standalone/).
